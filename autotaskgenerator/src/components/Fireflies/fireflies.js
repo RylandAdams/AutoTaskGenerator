@@ -17,12 +17,8 @@ export const getMeetingSummary = async (transcriptId) => {
                 id
                 title
                 sentences {
-                    index
                     speaker_name
-                    text
                     raw_text
-                    start_time
-                    end_time
                 }
             }
         }`,
