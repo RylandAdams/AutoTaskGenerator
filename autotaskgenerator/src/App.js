@@ -9,7 +9,7 @@ function App() {
 	useEffect(() => {
 		const fetchMeetingSummary = async () => {
 			try {
-				const summary = await getMeetingSummary('HWfy1MQO48J4JY8m'); // replace with actual transcript ID
+				const summary = await getMeetingSummary('cLbK4e0Ph9VfZJ2f'); // replace with
 				setMeetingSummary(summary);
 			} catch (error) {
 				console.error('Error fetching meeting summary:', error);

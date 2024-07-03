@@ -19,9 +19,9 @@ export const getMeetingSummary = async (transcriptId) => {
                 sentences {
                     index
                     speaker_name
-                    speaker_id
-                    raw_text
                     text
+                    raw_text
+                    start_time
                     end_time
                 }
             }
@@ -33,9 +33,17 @@ export const getMeetingSummary = async (transcriptId) => {
 		const response = await axios.post(FIRELIES_API_BASE_URL, data, {
 			headers,
 		});
-		return response.data.data.transcript.summary;
+		// Check if response is structured as expected
+		if (response.data.errors) {
+			console.error('GraphQL errors:', response.data.errors);
+			throw new Error('GraphQL error occurred');
+		}
+
+		// Extract transcript data
+		const transcript = response.data.data.transcript;
+		return transcript;
 	} catch (error) {
-		console.error('Error fetching meeting summary:', error);
+		console.error('Error fetching meeting transcript:', error);
 		throw error;
 	}
 };
