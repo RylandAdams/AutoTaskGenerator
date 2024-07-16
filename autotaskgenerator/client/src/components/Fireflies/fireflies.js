@@ -37,7 +37,19 @@ export const getMeetingSummary = async (transcriptId) => {
 
 		// Extract transcript data
 		const transcript = response.data.data.transcript;
-		return transcript;
+
+		// Format sentences
+		const formattedSentences = transcript.sentences.map(
+			(sentence) =>
+				`Then ${sentence.speaker_name} said "${sentence.raw_text}"`
+		);
+
+		// Return formatted data
+		return {
+			id: transcript.id,
+			title: transcript.title,
+			formattedText: formattedSentences.join(' '),
+		};
 	} catch (error) {
 		console.error('Error fetching meeting transcript:', error);
 		throw error;
