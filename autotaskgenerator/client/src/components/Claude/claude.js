@@ -8,20 +8,20 @@ const Claude = ({ messageContent }) => {
 		try {
 			const res = await axios.post(
 				'http://localhost:5000/api/sendMessage',
-				{
-					messageContent,
-				}
+				{ messageContent },
+				{ responseType: 'text' } // Add this line to expect a text response
 			);
-			setResponse(res.data);
+			setResponse(res.data); // res.data will now be the plain text
 		} catch (error) {
 			console.error('Error creating message:', error);
+			setResponse('Error: Failed to get response from Claude');
 		}
 	};
 
 	return (
 		<div>
 			<button onClick={sendMessage}>Send Message</button>
-			{response && <pre>{JSON.stringify(response, null, 2)}</pre>}
+			{response && <pre>{response}</pre>}
 		</div>
 	);
 };

@@ -30,10 +30,14 @@ app.post('/api/sendMessage', async (req, res) => {
 				},
 			}
 		);
-		res.json(response.data);
+		// Extract only the text content from the response
+		const assistantMessage = response.data.content[0].text;
+
+		// Send only the text content as the response
+		res.send(assistantMessage);
 	} catch (error) {
 		console.error('Error creating message:', error);
-		res.status(500).json({ error: 'Error creating message' });
+		res.status(500).send('Error creating message');
 	}
 });
 
