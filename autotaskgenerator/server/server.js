@@ -2,7 +2,9 @@ import express from 'express';
 import * as dotenv from 'dotenv';
 import cors from 'cors';
 import axios from 'axios';
+// import Anthropic from '@anthropic-ai/sdk';
 
+// const anthropic = new Anthropic();
 const app = express();
 const port = 5000;
 
@@ -22,8 +24,9 @@ app.post('/api/sendMessage', async (req, res) => {
 			{
 				headers: {
 					'x-api-key':
-						'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',
+						'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',
 					'Content-Type': 'application/json',
+					'anthropic-version': '2023-06-01',
 				},
 			}
 		);

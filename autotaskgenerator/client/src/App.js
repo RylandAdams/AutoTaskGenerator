@@ -28,10 +28,10 @@ function App() {
 			<Claude messageContent={message} />
 
 			{/* <h1>Meeting Summary</h1>
-			{meetingSummary ? (
+									{meetingSummary ? (
 				<pre>{JSON.stringify(meetingSummary, null, 2)}</pre>
 			) : (
-				<p>Loading...</p>
+									<p>Loading...</p>
 			)} */}
 		</div>
 	);
