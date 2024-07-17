@@ -12,7 +12,7 @@ function App() {
 		if (!meetingId) return;
 		try {
 			let summary = await getMeetingSummary(meetingId);
-			summary.formattedText = `I have the entire meeting summary in the following lines. Please make detailed todo lists for each of the attendees ${summary.formattedText}`;
+			summary.formattedText = `I have the entire meeting summary in the following lines. Please make detailed todo lists for each of the people who we mention have action items: I would like you to format it as the Persons name and a bulleted list below and if neccary sub bullets for a specific task ${summary.formattedText}`;
 			setMeetingSummary(summary);
 		} catch (error) {
 			console.error('Error fetching meeting summary:', error);
@@ -32,21 +32,12 @@ function App() {
 					type='text'
 					value={meetingId}
 					onChange={(e) => setMeetingId(e.target.value)}
-					placeholder='Enter Fireflies meeting ID'
+					placeholder='Enter FireFlies meeting ID'
 				/>
 				<button type='submit'>Fetch Summary</button>
 			</form>
 			{meetingSummary ? (
 				<div>
-					<p>
-						<strong>ID:</strong> {meetingSummary.id}
-					</p>
-					<p>
-						<strong>Title:</strong> {meetingSummary.title}
-					</p>
-					<p>
-						<strong>Formatted Text:</strong>
-					</p>
 					<pre>{meetingSummary.formattedText}</pre>
 				</div>
 			) : (
@@ -54,7 +45,11 @@ function App() {
 			)}
 
 			<h1>Send Message to Claude</h1>
-			<Claude messageContent={message} />
+			<Claude
+				messageContent={
+					meetingSummary ? meetingSummary.formattedText : message
+				}
+			/>
 		</div>
 	);
 }

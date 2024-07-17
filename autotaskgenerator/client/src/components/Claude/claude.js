@@ -3,25 +3,42 @@ import axios from 'axios';
 
 const Claude = ({ messageContent }) => {
 	const [response, setResponse] = useState(null);
+	const [editableResponse, setEditableResponse] = useState('');
 
 	const sendMessage = async () => {
 		try {
 			const res = await axios.post(
 				'http://localhost:5000/api/sendMessage',
 				{ messageContent },
-				{ responseType: 'text' } // Add this line to expect a text response
+				{ responseType: 'text' }
 			);
-			setResponse(res.data); // res.data will now be the plain text
+			setResponse(res.data);
+			setEditableResponse(res.data);
 		} catch (error) {
 			console.error('Error creating message:', error);
 			setResponse('Error: Failed to get response from Claude');
+			setEditableResponse('Error: Failed to get response from Claude');
 		}
+	};
+
+	const saveChanges = () => {
+		setResponse(editableResponse);
 	};
 
 	return (
 		<div>
 			<button onClick={sendMessage}>Send Message</button>
-			{response && <pre>{response}</pre>}
+			{response && (
+				<div>
+					<textarea
+						value={editableResponse}
+						onChange={(e) => setEditableResponse(e.target.value)}
+						rows={10}
+						cols={50}
+					/>
+					<button onClick={saveChanges}>Save Changes</button>
+				</div>
+			)}
 		</div>
 	);
 };
