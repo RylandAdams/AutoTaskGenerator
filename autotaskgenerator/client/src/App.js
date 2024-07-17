@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import './App.css';
 import { getMeetingSummary } from './components/Fireflies/fireflies';
 import Claude from './components/Claude/claude';
@@ -11,11 +11,9 @@ function App() {
 	const fetchMeetingSummary = async () => {
 		if (!meetingId) return;
 		try {
-			const summary = await getMeetingSummary(meetingId);
+			let summary = await getMeetingSummary(meetingId);
+			summary.formattedText = `I have the entire meeting summary in the following lines. Please make detailed todo lists for each of the attendees ${summary.formattedText}`;
 			setMeetingSummary(summary);
-			console.log(summary.id); // The original ID
-			console.log(summary.title); // The original title
-			console.log(summary.formattedText); // The formatted text of all sentences
 		} catch (error) {
 			console.error('Error fetching meeting summary:', error);
 		}
@@ -39,9 +37,20 @@ function App() {
 				<button type='submit'>Fetch Summary</button>
 			</form>
 			{meetingSummary ? (
-				<pre>{JSON.stringify(meetingSummary, null, 2)}</pre>
+				<div>
+					<p>
+						<strong>ID:</strong> {meetingSummary.id}
+					</p>
+					<p>
+						<strong>Title:</strong> {meetingSummary.title}
+					</p>
+					<p>
+						<strong>Formatted Text:</strong>
+					</p>
+					<pre>{meetingSummary.formattedText}</pre>
+				</div>
 			) : (
-				<p>Loading...</p>
+				<p>No summary available. Please fetch a meeting summary.</p>
 			)}
 
 			<h1>Send Message to Claude</h1>

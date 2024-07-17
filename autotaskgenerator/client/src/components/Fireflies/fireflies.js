@@ -37,6 +37,7 @@ export const getMeetingSummary = async (transcriptId) => {
 
 		// Extract transcript data
 		const transcript = response.data.data.transcript;
+		console.log(transcript);
 
 		// Format sentences
 		const formattedSentences = transcript.sentences.map(
