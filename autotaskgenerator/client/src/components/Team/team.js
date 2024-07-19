@@ -6,6 +6,7 @@ const TeamContainer = styled.div`
 	display: flex;
 	flex-direction: column;
 	align-items: center;
+	padding: 20px;
 `;
 
 const Title = styled.h1`
@@ -41,6 +42,10 @@ const Button = styled.button`
 	padding: 5px 10px;
 	cursor: pointer;
 	margin-left: 10px;
+
+	&:hover {
+		background-color: ${(props) => props.theme.navy};
+	}
 `;
 
 const Input = styled.input`
@@ -50,7 +55,7 @@ const Input = styled.input`
 	border-radius: 4px;
 `;
 
-const AddMemberForm = styled.form`
+const Form = styled.form`
 	display: flex;
 	justify-content: center;
 	margin-bottom: 20px;
@@ -82,20 +87,20 @@ const Team = () => {
 
 	const handleUpdateMember = () => {
 		if (newMember.name && newMember.role && newMember.userId) {
-			updateMember(editIndex, newMember);
+			updateMember(teamMembers[editIndex].userId, newMember);
 			setEditIndex(null);
 			setNewMember({ name: '', role: '', userId: '' });
 		}
 	};
 
-	const handleDeleteMember = (index) => {
-		deleteMember(index);
+	const handleDeleteMember = (userId) => {
+		deleteMember(userId);
 	};
 
 	return (
 		<TeamContainer>
 			<Title>Our Team</Title>
-			<AddMemberForm onSubmit={handleAddMember}>
+			<Form onSubmit={handleAddMember}>
 				<Input
 					type='text'
 					placeholder='Name'
@@ -123,10 +128,10 @@ const Team = () => {
 				<Button type='submit'>
 					{editIndex !== null ? 'Update' : 'Add'} Member
 				</Button>
-			</AddMemberForm>
+			</Form>
 			<TeamMemberList>
 				{teamMembers.map((member, index) => (
-					<TeamMember key={index}>
+					<TeamMember key={member.userId}>
 						{editIndex === index ? (
 							<>
 								<Input
@@ -174,7 +179,7 @@ const Team = () => {
 									</Button>
 									<Button
 										onClick={() =>
-											handleDeleteMember(index)
+											handleDeleteMember(member.userId)
 										}
 									>
 										Delete

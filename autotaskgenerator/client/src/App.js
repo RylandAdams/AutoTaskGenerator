@@ -105,7 +105,6 @@ function App() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [currentPage, setCurrentPage] = useState('home');
 	const claudeRef = useRef(null);
-	const teamId = '20115771';
 	const listId = '901101977190';
 	const apiKey = 'pk_75474330_J8BUV2X6XJMPYVKQMHILKCF129HIOU0J';
 
@@ -114,7 +113,7 @@ function App() {
 		setIsLoading(true);
 		try {
 			let summary = await getMeetingSummary(meetingId);
-			const formattedText = `Please create todo lists for each person mentioned in the meeting summary who has action items. Format each person's todos as a bulleted list, using sub-bullets for specific tasks if necessary. Also try to give a sentance or 2 extra of detail around a todo if possible? Here's the meeting summary: ${summary.formattedText}`;
+			const formattedText = `Please create todo lists for each person mentioned in the meeting summary who has action items. Format each person's todos as a bulleted list, using sub-bullets for specific tasks if necessary. Also try to give a sentence or 2 extra of detail around a todo if possible? Here's the meeting summary: ${summary.formattedText}`;
 
 			if (claudeRef.current) {
 				claudeRef.current.sendMessage(formattedText);

@@ -8,8 +8,8 @@ export const TeamProvider = ({ children }) => {
 		return savedMembers
 			? JSON.parse(savedMembers)
 			: [
-					{ id: 'JD001', name: 'John Doe' },
-					{ id: 'JS002', name: 'Jane Smith' },
+					{ name: 'John Doe', role: 'Developer', userId: '123456' },
+					{ name: 'Jane Smith', role: 'Designer', userId: '789012' },
 					// Add more default team members as needed
 			  ];
 	});
@@ -22,16 +22,20 @@ export const TeamProvider = ({ children }) => {
 		setTeamMembers([...teamMembers, newMember]);
 	};
 
-	const updateMember = (id, updatedMember) => {
+	const updateMember = (userId, updatedMember) => {
 		setTeamMembers(
 			teamMembers.map((member) =>
-				member.id === id ? { ...member, ...updatedMember } : member
+				member.userId === userId
+					? { ...member, ...updatedMember }
+					: member
 			)
 		);
 	};
 
-	const deleteMember = (id) => {
-		setTeamMembers(teamMembers.filter((member) => member.id !== id));
+	const deleteMember = (userId) => {
+		setTeamMembers(
+			teamMembers.filter((member) => member.userId !== userId)
+		);
 	};
 
 	return (

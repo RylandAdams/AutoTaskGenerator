@@ -85,12 +85,16 @@ const ErrorMessage = styled.div`
 	margin-bottom: 10px;
 `;
 
+const AssigneeContainer = styled.div`
+	margin-bottom: 10px;
+`;
+
 const ClickUpTaskForm = ({ listId, apiKey }) => {
 	const { teamMembers } = useTeam();
 	const [taskData, setTaskData] = useState({
 		name: '',
 		description: '',
-		assignee: '',
+		assignees: [''],
 		status: 'Open',
 		priority: 3,
 		due_date: '',
@@ -109,17 +113,31 @@ const ClickUpTaskForm = ({ listId, apiKey }) => {
 		}));
 	};
 
+	const handleAssigneeChange = (index, value) => {
+		setTaskData((prevData) => {
+			const newAssignees = [...prevData.assignees];
+			newAssignees[index] = value;
+			if (value && index === newAssignees.length - 1) {
+				newAssignees.push('');
+			}
+			return { ...prevData, assignees: newAssignees };
+		});
+	};
+
 	const handleSubmit = async (e) => {
 		e.preventDefault();
 		setIsLoading(true);
 		setError(null);
 
 		console.log('Using List ID:', listId);
+		console.log('Assignee IDs being sent:', taskData.assignees);
 
 		const requestData = {
 			name: taskData.name,
 			description: taskData.description,
-			assignees: [taskData.assignee],
+			assignees: taskData.assignees
+				.filter((id) => id !== '')
+				.map((id) => parseInt(id)),
 			status: taskData.status,
 			priority: parseInt(taskData.priority),
 			due_date: taskData.due_date
@@ -130,10 +148,6 @@ const ClickUpTaskForm = ({ listId, apiKey }) => {
 
 		console.log('Sending request to:', `${API_URL}/list/${listId}/task`);
 		console.log('With data:', requestData);
-		console.log('Headers:', {
-			Authorization: apiKey,
-			'Content-Type': 'application/json',
-		});
 
 		try {
 			const response = await axios.post(
@@ -154,7 +168,7 @@ const ClickUpTaskForm = ({ listId, apiKey }) => {
 			setTaskData({
 				name: '',
 				description: '',
-				assignee: '',
+				assignees: [''],
 				status: 'Open',
 				priority: 3,
 				due_date: '',
@@ -206,24 +220,27 @@ const ClickUpTaskForm = ({ listId, apiKey }) => {
 			</InputGroup>
 
 			<InputGroup>
-				<Label htmlFor='assignee'>Assignee</Label>
-				<Select
-					id='assignee'
-					name='assignee'
-					value={taskData.assignee}
-					onChange={handleChange}
-					required
-				>
-					<option value=''>Select an assignee</option>
-					{teamMembers.map((member) => (
-						<option
-							key={member.id}
-							value={member.id}
+				<Label>Assignees</Label>
+				{taskData.assignees.map((assignee, index) => (
+					<AssigneeContainer key={index}>
+						<Select
+							value={assignee}
+							onChange={(e) =>
+								handleAssigneeChange(index, e.target.value)
+							}
 						>
-							{member.name}
-						</option>
-					))}
-				</Select>
+							<option value=''>Select an assignee</option>
+							{teamMembers.map((member) => (
+								<option
+									key={member.userId}
+									value={member.userId}
+								>
+									{member.name}
+								</option>
+							))}
+						</Select>
+					</AssigneeContainer>
+				))}
 			</InputGroup>
 
 			<InputGroup>
