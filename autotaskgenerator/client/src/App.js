@@ -107,7 +107,7 @@ function App() {
 	const claudeRef = useRef(null);
 	const teamId = '20115771';
 	const listId = '901101977190';
-	const apiKey = 'Ypk_75474330_J8BUV2X6XJMPYVKQMHILKCF129HIOU0J';
+	const apiKey = 'pk_75474330_J8BUV2X6XJMPYVKQMHILKCF129HIOU0J';
 
 	const fetchMeetingSummaryAndSendToClaude = async () => {
 		if (!meetingId) return;
