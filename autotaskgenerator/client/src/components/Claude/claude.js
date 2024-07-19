@@ -1,48 +1,37 @@
-import React, { useState, forwardRef, useImperativeHandle } from 'react';
+import React, { forwardRef, useImperativeHandle } from 'react';
 import styled from 'styled-components';
 import axios from 'axios';
+import { useTodos } from '../../TodoContext';
 
 const ClaudeContainer = styled.div`
-	margin-bottom: 20px;
 	font-family: Arial, sans-serif;
-	width: ${(props) => props.width || '100%'};
-	max-width: 800px;
-	margin-left: auto;
-	margin-right: auto;
+	width: 100%;
 `;
 
-const Button = styled.button`
-	background-color: #0b52e1;
-	color: white;
-	padding: 12px 20px;
-	border: none;
-	border-radius: 8px;
-	cursor: pointer;
-	font-size: 16px;
-	transition: background-color 0.3s ease;
+const TodoBox = styled.div`
+	display: flex;
+	flex-direction: column;
+`;
 
-	&:hover {
-		background-color: #083796;
-	}
+const TextContainer = styled.div`
+	border: 2px solid #e4eefc;
+	border-radius: 4px;
+	background-color: #07235c;
 `;
 
 const TextArea = styled.textarea`
 	width: 100%;
-	height: 300px;
-	padding: 15px;
-	margin: 15px 0;
-	background-color: #07235c;
+	height: 400px;
+	padding: 10px;
+	background-color: transparent;
 	color: #ffffff;
-	border: 2px solid #e4eefc;
-	border-radius: 8px;
+	border: none;
 	resize: vertical;
 	font-size: 14px;
 	line-height: 1.5;
-	transition: border-color 0.3s ease;
 
 	&:focus {
 		outline: none;
-		border-color: #0b52e1;
 	}
 
 	&::placeholder {
@@ -50,15 +39,8 @@ const TextArea = styled.textarea`
 	}
 `;
 
-const ButtonContainer = styled.div`
-	display: flex;
-	justify-content: center;
-	margin-top: 10px;
-`;
-
 const Claude = forwardRef((props, ref) => {
-	const [response, setResponse] = useState(null);
-	const [editableResponse, setEditableResponse] = useState('');
+	const { todos, updateTodos } = useTodos();
 
 	const sendMessage = async (messageContent) => {
 		try {
@@ -67,12 +49,10 @@ const Claude = forwardRef((props, ref) => {
 				{ messageContent },
 				{ responseType: 'text' }
 			);
-			setResponse(res.data);
-			setEditableResponse(res.data);
+			updateTodos(res.data);
 		} catch (error) {
 			console.error('Error creating message:', error);
-			setResponse('Error: Failed to get response from Claude');
-			setEditableResponse('Error: Failed to get response from Claude');
+			updateTodos('Failed to get response from Claude');
 		}
 	};
 
@@ -80,25 +60,21 @@ const Claude = forwardRef((props, ref) => {
 		sendMessage,
 	}));
 
-	const saveChanges = () => {
-		setResponse(editableResponse);
-		console.log(editableResponse);
+	const handleTodoChange = (e) => {
+		updateTodos(e.target.value);
 	};
 
 	return (
-		<ClaudeContainer width={props.width}>
-			{response && (
-				<div>
+		<ClaudeContainer>
+			<TodoBox>
+				<TextContainer>
 					<TextArea
-						value={editableResponse}
-						onChange={(e) => setEditableResponse(e.target.value)}
-						placeholder="Claude's response will appear here..."
+						value={todos}
+						onChange={handleTodoChange}
+						placeholder='Todo list will appear here...'
 					/>
-					<ButtonContainer>
-						<Button onClick={saveChanges}>Save Changes</Button>
-					</ButtonContainer>
-				</div>
-			)}
+				</TextContainer>
+			</TodoBox>
 		</ClaudeContainer>
 	);
 });

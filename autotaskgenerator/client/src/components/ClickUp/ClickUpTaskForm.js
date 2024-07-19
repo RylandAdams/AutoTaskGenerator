@@ -1,15 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import styled from 'styled-components';
-
-const peopleList = [
-	{ name: 'Abdul', listId: 'ABDUL_LIST_ID' },
-	{ name: 'Anton', listId: 'ANTON_LIST_ID' },
-	{ name: 'Vahonga', listId: 'VAHONGA_LIST_ID' },
-	{ name: 'Nadeem', listId: 'NADEEM_LIST_ID' },
-	{ name: 'Coca', listId: 'COCA_LIST_ID' },
-	{ name: 'Daniel', listId: 'DANIEL_LIST_ID' },
-];
+import { useTeam } from '../../TeamContext';
 
 const FormContainer = styled.form`
 	width: 100%;
@@ -81,9 +73,20 @@ const SubmitButton = styled.button`
 	&:hover {
 		background-color: ${(props) => props.theme.navy};
 	}
+
+	&:disabled {
+		background-color: #cccccc;
+		cursor: not-allowed;
+	}
 `;
 
-const ClickUpTaskForm = ({ teamId, apiKey }) => {
+const ErrorMessage = styled.div`
+	color: red;
+	margin-bottom: 10px;
+`;
+
+const ClickUpTaskForm = ({ listId, apiKey }) => {
+	const { teamMembers } = useTeam();
 	const [taskData, setTaskData] = useState({
 		name: '',
 		description: '',
@@ -93,15 +96,10 @@ const ClickUpTaskForm = ({ teamId, apiKey }) => {
 		due_date: '',
 		tags: '',
 	});
+	const [isLoading, setIsLoading] = useState(false);
+	const [error, setError] = useState(null);
 
-	const [selectedListId, setSelectedListId] = useState('');
-
-	useEffect(() => {
-		const person = peopleList.find(
-			(p) => p.name.toLowerCase() === taskData.assignee.toLowerCase()
-		);
-		setSelectedListId(person ? person.listId : '');
-	}, [taskData.assignee]);
+	const API_URL = 'https://api.clickup.com/api/v2';
 
 	const handleChange = (e) => {
 		const { name, value } = e.target;
@@ -113,41 +111,46 @@ const ClickUpTaskForm = ({ teamId, apiKey }) => {
 
 	const handleSubmit = async (e) => {
 		e.preventDefault();
-		if (!selectedListId) {
-			alert('Please enter a valid assignee name');
-			return;
-		}
+		setIsLoading(true);
+		setError(null);
 
-		const url = `https://api.clickup.com/api/v2/list/${selectedListId}/task`;
-		const queryParams = new URLSearchParams({
-			custom_task_ids: 'true',
-			team_id: teamId,
-		}).toString();
+		console.log('Using List ID:', listId);
 
-		const assigneePerson = peopleList.find(
-			(p) => p.name.toLowerCase() === taskData.assignee.toLowerCase()
-		);
-		const assigneeId = assigneePerson ? [assigneePerson.listId] : [];
-
-		const dataToSubmit = {
-			...taskData,
-			assignees: assigneeId,
+		const requestData = {
+			name: taskData.name,
+			description: taskData.description,
+			assignees: [taskData.assignee],
+			status: taskData.status,
+			priority: parseInt(taskData.priority),
+			due_date: taskData.due_date
+				? new Date(taskData.due_date).getTime()
+				: null,
 			tags: taskData.tags.split(',').map((tag) => tag.trim()),
 		};
 
+		console.log('Sending request to:', `${API_URL}/list/${listId}/task`);
+		console.log('With data:', requestData);
+		console.log('Headers:', {
+			Authorization: apiKey,
+			'Content-Type': 'application/json',
+		});
+
 		try {
 			const response = await axios.post(
-				`${url}?${queryParams}`,
-				dataToSubmit,
+				`${API_URL}/list/${listId}/task`,
+				requestData,
 				{
 					headers: {
-						'Content-Type': 'application/json',
 						Authorization: apiKey,
+						'Content-Type': 'application/json',
 					},
 				}
 			);
+
 			console.log('Task created:', response.data);
 			alert('Task created successfully!');
+
+			// Reset form
 			setTaskData({
 				name: '',
 				description: '',
@@ -159,7 +162,20 @@ const ClickUpTaskForm = ({ teamId, apiKey }) => {
 			});
 		} catch (error) {
 			console.error('Error creating task:', error);
-			alert('Error creating task. Please try again.');
+			if (error.response) {
+				console.error('Response data:', error.response.data);
+				console.error('Response status:', error.response.status);
+				console.error('Response headers:', error.response.headers);
+			} else if (error.request) {
+				console.error('No response received:', error.request);
+			} else {
+				console.error('Error message:', error.message);
+			}
+			setError(
+				'Failed to create task. Please check the console for more details.'
+			);
+		} finally {
+			setIsLoading(false);
 		}
 	};
 
@@ -191,22 +207,23 @@ const ClickUpTaskForm = ({ teamId, apiKey }) => {
 
 			<InputGroup>
 				<Label htmlFor='assignee'>Assignee</Label>
-				<Input
+				<Select
 					id='assignee'
-					type='text'
 					name='assignee'
 					value={taskData.assignee}
 					onChange={handleChange}
-					list='peopleList'
-				/>
-				<datalist id='peopleList'>
-					{peopleList.map((person) => (
+					required
+				>
+					<option value=''>Select an assignee</option>
+					{teamMembers.map((member) => (
 						<option
-							key={person.listId}
-							value={person.name}
-						/>
+							key={member.id}
+							value={member.id}
+						>
+							{member.name}
+						</option>
 					))}
-				</datalist>
+				</Select>
 			</InputGroup>
 
 			<InputGroup>
@@ -246,7 +263,14 @@ const ClickUpTaskForm = ({ teamId, apiKey }) => {
 				/>
 			</InputGroup>
 
-			<SubmitButton type='submit'>Create Task</SubmitButton>
+			{error && <ErrorMessage>{error}</ErrorMessage>}
+
+			<SubmitButton
+				type='submit'
+				disabled={isLoading}
+			>
+				{isLoading ? 'Creating...' : 'Create Task'}
+			</SubmitButton>
 		</FormContainer>
 	);
 };

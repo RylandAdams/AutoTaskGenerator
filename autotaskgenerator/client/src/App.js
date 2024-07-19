@@ -5,6 +5,8 @@ import { getMeetingSummary } from './components/FireFlies/FireFlies';
 import Claude from './components/Claude/Claude';
 import ClickUpTaskForm from './components/ClickUp/ClickUpTaskForm';
 import Team from './components/Team/team';
+import { TeamProvider } from './TeamContext';
+import { TodoProvider } from './TodoContext';
 
 const theme = {
 	electricBlue: '#0B52E1',
@@ -24,7 +26,7 @@ const AppContainer = styled.div`
 `;
 
 const ContentWrapper = styled.div`
-	max-width: 800px;
+	max-width: 1200px;
 	margin: 0 auto;
 `;
 
@@ -33,6 +35,18 @@ const CenteredSection = styled.div`
 	flex-direction: column;
 	align-items: center;
 	margin-bottom: 20px;
+`;
+
+const SplitSection = styled.div`
+	display: flex;
+	justify-content: space-between;
+	gap: 20px;
+	width: 100%;
+`;
+
+const Column = styled.div`
+	flex: 1;
+	max-width: 48%;
 `;
 
 const Title = styled.h1`
@@ -91,15 +105,16 @@ function App() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [currentPage, setCurrentPage] = useState('home');
 	const claudeRef = useRef(null);
-	const teamId = 'YOUR_TEAM_ID';
-	const apiKey = 'YOUR_API_KEY';
+	const teamId = '20115771';
+	const listId = '901101977190';
+	const apiKey = 'Ypk_75474330_J8BUV2X6XJMPYVKQMHILKCF129HIOU0J';
 
 	const fetchMeetingSummaryAndSendToClaude = async () => {
 		if (!meetingId) return;
 		setIsLoading(true);
 		try {
 			let summary = await getMeetingSummary(meetingId);
-			const formattedText = `I have the entire meeting summary in the following lines. Please make todo lists for each of the people who we mention have action items. I would like you to format it as the Persons name and a bulleted list below and if necessary sub bullets for a specific task ${summary.formattedText}`;
+			const formattedText = `Please create todo lists for each person mentioned in the meeting summary who has action items. Format each person's todos as a bulleted list, using sub-bullets for specific tasks if necessary. Also try to give a sentance or 2 extra of detail around a todo if possible? Here's the meeting summary: ${summary.formattedText}`;
 
 			if (claudeRef.current) {
 				claudeRef.current.sendMessage(formattedText);
@@ -142,21 +157,20 @@ function App() {
 								</Button>
 							</Form>
 						</CenteredSection>
-
-						<CenteredSection>
-							<Title>Todo List</Title>
-							<Claude
-								ref={claudeRef}
-								width='80%'
-							/>
-						</CenteredSection>
-
-						<CenteredSection>
-							<ClickUpTaskForm
-								teamId={teamId}
-								apiKey={apiKey}
-							/>
-						</CenteredSection>
+						<SplitSection>
+							<Column>
+								<Claude
+									ref={claudeRef}
+									width='100%'
+								/>
+							</Column>
+							<Column>
+								<ClickUpTaskForm
+									listId={listId}
+									apiKey={apiKey}
+								/>
+							</Column>
+						</SplitSection>
 					</>
 				);
 			case 'team':
@@ -168,23 +182,27 @@ function App() {
 
 	return (
 		<ThemeProvider theme={theme}>
-			<AppContainer>
-				<NavContainer>
-					<NavButton
-						active={currentPage === 'home'}
-						onClick={() => setCurrentPage('home')}
-					>
-						Home
-					</NavButton>
-					<NavButton
-						active={currentPage === 'team'}
-						onClick={() => setCurrentPage('team')}
-					>
-						Team
-					</NavButton>
-				</NavContainer>
-				<ContentWrapper>{renderContent()}</ContentWrapper>
-			</AppContainer>
+			<TeamProvider>
+				<TodoProvider>
+					<AppContainer>
+						<NavContainer>
+							<NavButton
+								active={currentPage === 'home'}
+								onClick={() => setCurrentPage('home')}
+							>
+								Home
+							</NavButton>
+							<NavButton
+								active={currentPage === 'team'}
+								onClick={() => setCurrentPage('team')}
+							>
+								Team
+							</NavButton>
+						</NavContainer>
+						<ContentWrapper>{renderContent()}</ContentWrapper>
+					</AppContainer>
+				</TodoProvider>
+			</TeamProvider>
 		</ThemeProvider>
 	);
 }
