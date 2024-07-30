@@ -1,12 +1,12 @@
 import express from 'express';
-import * as dotenv from 'dotenv';
+import dotenv from 'dotenv';
 import cors from 'cors';
 import axios from 'axios';
-// import Anthropic from '@anthropic-ai/sdk';
 
-// const anthropic = new Anthropic();
+dotenv.config();
+
 const app = express();
-const port = 5000;
+const port = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
@@ -17,27 +17,30 @@ app.post('/api/sendMessage', async (req, res) => {
 		const response = await axios.post(
 			'https://api.anthropic.com/v1/messages',
 			{
-				model: 'claude-3-5-sonnet-20240620',
-				max_tokens: 1024,
+				model: process.env.ANTHROPIC_MODEL,
+				max_tokens: parseInt(process.env.ANTHROPIC_MAX_TOKENS),
 				messages: [{ role: 'user', content: messageContent }],
 			},
 			{
 				headers: {
-					'x-api-key':
-						'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',
+					'x-api-key': process.env.ANTHROPIC_API_KEY,
 					'Content-Type': 'application/json',
-					'anthropic-version': '2023-06-01',
+					'anthropic-version': process.env.ANTHROPIC_API_VERSION,
 				},
 			}
 		);
+
 		// Extract only the text content from the response
 		const assistantMessage = response.data.content[0].text;
 
 		// Send only the text content as the response
-		res.send(assistantMessage);
+		res.json({ message: assistantMessage });
 	} catch (error) {
-		console.error('Error creating message:', error);
-		res.status(500).send('Error creating message');
+		console.error(
+			'Error creating message:',
+			error.response?.data || error.message
+		);
+		res.status(500).json({ error: 'Error creating message' });
 	}
 });
 

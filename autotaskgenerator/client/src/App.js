@@ -147,8 +147,10 @@ function App() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [currentPage, setCurrentPage] = useState('home');
 	const claudeRef = useRef(null);
-	const [selectedListId, setSelectedListId] = useState('901103664000');
-	const apiKey = 'pk_75474330_J8BUV2X6XJMPYVKQMHILKCF129HIOU0J';
+	const [selectedListId, setSelectedListId] = useState(
+		process.env.REACT_APP_DEFAULT_CLICKUP_LIST_ID
+	);
+	const apiKey = process.env.REACT_APP_CLICKUP_API_KEY;
 	const [recentMeetings, setRecentMeetings] = useState([]);
 	const [error, setError] = useState(null);
 	const [todoList, setTodoList] = useState('');
@@ -191,7 +193,7 @@ function App() {
 		setError(null);
 		try {
 			let summary = await getMeetingSummary(selectedMeetingId);
-			const formattedText = `Please create todo lists for each person mentioned in the meeting summary who has action items. Format each person's todos as a bulleted list, using sub-bullets for specific tasks if necessary. Also try to give a sentence or 2 extra of detail around a todo if possible? Here's the meeting summary: ${summary.formattedText}`;
+			const formattedText = `Please create todo lists for each person mentioned in the meeting summary who has action items. Format each person's todos as a bulleted list, using sub-bullets for specific tasks if necessary. Also try to give a sentance or 2 extra of detail around a todo if possible? Here's the meeting summary: ${summary.formattedText}`;
 
 			if (claudeRef.current) {
 				const response = await claudeRef.current.sendMessage(

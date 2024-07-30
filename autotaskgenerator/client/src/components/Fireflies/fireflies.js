@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const FIREFLIES_API_BASE_URL = 'https://api.fireflies.ai/graphql';
-const FIREFLIES_API_KEY = '41f64df0-8546-4e6d-854f-325c76cf555a';
+const FIREFLIES_API_BASE_URL = process.env.REACT_APP_FIREFLIES_API_BASE_URL;
+const FIREFLIES_API_KEY = process.env.REACT_APP_FIREFLIES_API_KEY;
 
 export const getMeetingSummary = async (transcriptId) => {
 	const headers = {

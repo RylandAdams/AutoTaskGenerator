@@ -1,4 +1,9 @@
-import React, { useState, forwardRef, useImperativeHandle } from 'react';
+import React, {
+	useState,
+	forwardRef,
+	useImperativeHandle,
+	useEffect,
+} from 'react';
 import styled from 'styled-components';
 import axios from 'axios';
 
@@ -39,7 +44,7 @@ const TextArea = styled.textarea`
 `;
 
 const Claude = forwardRef(({ todoList, width }, ref) => {
-	const [todos, setTodos] = useState(todoList);
+	const [todos, setTodos] = useState('');
 
 	useImperativeHandle(ref, () => ({
 		sendMessage: async (messageContent) => {
@@ -49,7 +54,8 @@ const Claude = forwardRef(({ todoList, width }, ref) => {
 					{ messageContent },
 					{ responseType: 'text' }
 				);
-				setTodos(response.data);
+				const formattedTodos = formatTodos(response.data);
+				setTodos(formattedTodos);
 				return response.data;
 			} catch (error) {
 				console.error('Error creating message:', error);
@@ -57,6 +63,63 @@ const Claude = forwardRef(({ todoList, width }, ref) => {
 			}
 		},
 	}));
+
+	useEffect(() => {
+		if (todoList) {
+			const formattedTodos = formatTodos(todoList);
+			setTodos(formattedTodos);
+		}
+	}, [todoList]);
+
+	const formatTodos = (rawTodos) => {
+		try {
+			const parsedTodos = JSON.parse(rawTodos);
+			const messageContent = parsedTodos.message;
+
+			// Split the content by lines
+			const lines = messageContent.split('\n');
+
+			let currentPerson = '';
+			let currentTodos = [];
+			const formattedSections = [];
+
+			lines.forEach((line) => {
+				line = line.trim();
+				if (line === '') return; // Skip empty lines
+
+				// Check if the line is a name (ends with a colon or is a single word)
+				if (line.endsWith(':') || !line.includes(' ')) {
+					// If we have a current person, add their section to the formatted sections
+					if (currentPerson && currentTodos.length > 0) {
+						formattedSections.push(
+							`${currentPerson}:\n${currentTodos.join('\n')}`
+						);
+					}
+					// Start a new person section
+					currentPerson = line.replace(':', '').trim();
+					currentTodos = [];
+				} else if (line.match(/^[a-z]:$/)) {
+					// Skip single letter lines
+					return;
+				} else {
+					// This is a todo item
+					currentTodos.push(line);
+				}
+			});
+
+			// Add the last person's section if it exists
+			if (currentPerson && currentTodos.length > 0) {
+				formattedSections.push(
+					`${currentPerson}:\n${currentTodos.join('\n')}`
+				);
+			}
+
+			return formattedSections.join('\n\n');
+		} catch (error) {
+			console.error('Error formatting todos:', error);
+			return rawTodos; // Return original text if parsing fails
+		}
+	};
 
 	const handleTodoChange = (e) => {
 		setTodos(e.target.value);
