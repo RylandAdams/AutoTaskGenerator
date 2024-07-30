@@ -1,13 +1,12 @@
-// src/components/Fireflies/fireflies.js
 import axios from 'axios';
 
-const FIRELIES_API_BASE_URL = 'https://api.fireflies.ai/graphql';
-const FIRELIES_API_KEY = '41f64df0-8546-4e6d-854f-325c76cf555a'; // replace with your actual API key
+const FIREFLIES_API_BASE_URL = 'https://api.fireflies.ai/graphql';
+const FIREFLIES_API_KEY = '41f64df0-8546-4e6d-854f-325c76cf555a';
 
 export const getMeetingSummary = async (transcriptId) => {
 	const headers = {
 		'Content-Type': 'application/json',
-		Authorization: `Bearer ${FIRELIES_API_KEY}`,
+		Authorization: `Bearer ${FIREFLIES_API_KEY}`,
 	};
 
 	const data = {
@@ -26,26 +25,22 @@ export const getMeetingSummary = async (transcriptId) => {
 	};
 
 	try {
-		const response = await axios.post(FIRELIES_API_BASE_URL, data, {
+		const response = await axios.post(FIREFLIES_API_BASE_URL, data, {
 			headers,
 		});
-		// Check if response is structured as expected
 		if (response.data.errors) {
 			console.error('GraphQL errors:', response.data.errors);
 			throw new Error('GraphQL error occurred');
 		}
 
-		// Extract transcript data
 		const transcript = response.data.data.transcript;
 		console.log(transcript);
 
-		// Format sentences
 		const formattedSentences = transcript.sentences.map(
 			(sentence) =>
 				`Then ${sentence.speaker_name} said "${sentence.raw_text}"`
 		);
 
-		// Return formatted data
 		return {
 			id: transcript.id,
 			title: transcript.title,
@@ -53,6 +48,52 @@ export const getMeetingSummary = async (transcriptId) => {
 		};
 	} catch (error) {
 		console.error('Error fetching meeting transcript:', error);
+		throw error;
+	}
+};
+
+export const getRecentMeetings = async (limit = 25) => {
+	const headers = {
+		'Content-Type': 'application/json',
+		Authorization: `Bearer ${FIREFLIES_API_KEY}`,
+	};
+
+	const data = {
+		query: `
+        query RecentTranscripts($limit: Int!) {
+            transcripts(limit: $limit) {
+                id
+                title
+                date
+            }
+        }`,
+		variables: { limit },
+	};
+
+	console.log('Request headers:', headers);
+	console.log('Request data:', JSON.stringify(data, null, 2));
+
+	try {
+		console.log('Fetching recent meetings...');
+		const response = await axios.post(FIREFLIES_API_BASE_URL, data, {
+			headers,
+		});
+
+		console.log('Response status:', response.status);
+		console.log('Response data:', JSON.stringify(response.data, null, 2));
+
+		if (response.data.errors) {
+			console.error('GraphQL errors:', response.data.errors);
+			throw new Error('GraphQL error occurred');
+		}
+
+		return response.data.data.transcripts;
+	} catch (error) {
+		console.error('Error fetching recent meetings:', error);
+		if (error.response) {
+			console.error('Error status:', error.response.status);
+			console.error('Error data:', error.response.data);
+		}
 		throw error;
 	}
 };

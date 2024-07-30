@@ -1,11 +1,10 @@
-import React, { forwardRef, useImperativeHandle } from 'react';
+import React, { useState, forwardRef, useImperativeHandle } from 'react';
 import styled from 'styled-components';
 import axios from 'axios';
-import { useTodos } from '../../TodoContext';
 
 const ClaudeContainer = styled.div`
+	margin-bottom: 20px;
 	font-family: Arial, sans-serif;
-	width: 100%;
 `;
 
 const TodoBox = styled.div`
@@ -39,33 +38,32 @@ const TextArea = styled.textarea`
 	}
 `;
 
-const Claude = forwardRef((props, ref) => {
-	const { todos, updateTodos } = useTodos();
-
-	const sendMessage = async (messageContent) => {
-		try {
-			const res = await axios.post(
-				'http://localhost:5000/api/sendMessage',
-				{ messageContent },
-				{ responseType: 'text' }
-			);
-			updateTodos(res.data);
-		} catch (error) {
-			console.error('Error creating message:', error);
-			updateTodos('Failed to get response from Claude');
-		}
-	};
+const Claude = forwardRef(({ todoList, width }, ref) => {
+	const [todos, setTodos] = useState(todoList);
 
 	useImperativeHandle(ref, () => ({
-		sendMessage,
+		sendMessage: async (messageContent) => {
+			try {
+				const response = await axios.post(
+					'http://localhost:5000/api/sendMessage',
+					{ messageContent },
+					{ responseType: 'text' }
+				);
+				setTodos(response.data);
+				return response.data;
+			} catch (error) {
+				console.error('Error creating message:', error);
+				throw error;
+			}
+		},
 	}));
 
 	const handleTodoChange = (e) => {
-		updateTodos(e.target.value);
+		setTodos(e.target.value);
 	};
 
 	return (
-		<ClaudeContainer>
+		<ClaudeContainer style={{ width }}>
 			<TodoBox>
 				<TextContainer>
 					<TextArea

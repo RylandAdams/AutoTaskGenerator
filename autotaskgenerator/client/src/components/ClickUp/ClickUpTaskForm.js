@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import styled from 'styled-components';
 import { useTeam } from '../../TeamContext';
@@ -22,6 +22,10 @@ const FormTitle = styled.h2`
 
 const InputGroup = styled.div`
 	margin-bottom: 15px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	width: 100%;
 `;
 
 const Label = styled.label`
@@ -29,6 +33,8 @@ const Label = styled.label`
 	margin-bottom: 5px;
 	color: ${(props) => props.theme.deepBlue};
 	font-weight: bold;
+	align-self: flex-start;
+	width: 100%;
 `;
 
 const Input = styled.input`
@@ -83,10 +89,8 @@ const SubmitButton = styled.button`
 const ErrorMessage = styled.div`
 	color: red;
 	margin-bottom: 10px;
-`;
-
-const AssigneeContainer = styled.div`
-	margin-bottom: 10px;
+	text-align: center;
+	width: 100%;
 `;
 
 const ClickUpTaskForm = ({ listId, apiKey }) => {
@@ -95,15 +99,18 @@ const ClickUpTaskForm = ({ listId, apiKey }) => {
 		name: '',
 		description: '',
 		assignees: [''],
-		status: 'Open',
 		priority: 3,
 		due_date: '',
-		tags: '',
+		subject: '',
 	});
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState(null);
 
 	const API_URL = 'https://api.clickup.com/api/v2';
+
+	useEffect(() => {
+		console.log('Current List ID:', listId);
+	}, [listId]);
 
 	const handleChange = (e) => {
 		const { name, value } = e.target;
@@ -129,27 +136,37 @@ const ClickUpTaskForm = ({ listId, apiKey }) => {
 		setIsLoading(true);
 		setError(null);
 
-		console.log('Using List ID:', listId);
-		console.log('Assignee IDs being sent:', taskData.assignees);
-
 		const requestData = {
 			name: taskData.name,
 			description: taskData.description,
 			assignees: taskData.assignees
 				.filter((id) => id !== '')
 				.map((id) => parseInt(id)),
-			status: taskData.status,
 			priority: parseInt(taskData.priority),
 			due_date: taskData.due_date
 				? new Date(taskData.due_date).getTime()
 				: null,
-			tags: taskData.tags.split(',').map((tag) => tag.trim()),
+			custom_fields: [
+				{
+					id: 'ab06fc9b-2d10-48b1-9c36-6b0910304487',
+					value: true,
+				},
+			],
 		};
 
-		console.log('Sending request to:', `${API_URL}/list/${listId}/task`);
-		console.log('With data:', requestData);
+		if (taskData.subject) {
+			requestData.name = `${taskData.subject}: ${requestData.name}`;
+		}
 
 		try {
+			console.log(
+				'Sending request to URL:',
+				`${API_URL}/list/${listId}/task`
+			);
+			console.log(
+				'Sending request with data:',
+				JSON.stringify(requestData, null, 2)
+			);
 			const response = await axios.post(
 				`${API_URL}/list/${listId}/task`,
 				requestData,
@@ -164,34 +181,56 @@ const ClickUpTaskForm = ({ listId, apiKey }) => {
 			console.log('Task created:', response.data);
 			alert('Task created successfully!');
 
-			// Reset form
 			setTaskData({
 				name: '',
 				description: '',
 				assignees: [''],
-				status: 'Open',
 				priority: 3,
 				due_date: '',
-				tags: '',
+				subject: '',
 			});
 		} catch (error) {
 			console.error('Error creating task:', error);
+			let errorMessage = 'Failed to create task. ';
 			if (error.response) {
-				console.error('Response data:', error.response.data);
-				console.error('Response status:', error.response.status);
-				console.error('Response headers:', error.response.headers);
+				console.error('Error data:', error.response.data);
+				console.error('Error status:', error.response.status);
+				console.error('Error headers:', error.response.headers);
+
+				if (error.response.status === 400) {
+					errorMessage =
+						'Bad request. There might be an issue with the data being sent. Details: ';
+					if (error.response.data && error.response.data.err) {
+						errorMessage += error.response.data.err;
+					} else {
+						errorMessage +=
+							'No specific error details provided by the server.';
+					}
+				} else if (error.response.status === 404) {
+					errorMessage = `List not found. Please check if the List ID (${listId}) is correct.`;
+				} else {
+					errorMessage += `Server responded with status ${error.response.status}. `;
+					if (error.response.data && error.response.data.err) {
+						errorMessage += error.response.data.err;
+					}
+				}
 			} else if (error.request) {
-				console.error('No response received:', error.request);
+				console.error('Error request:', error.request);
+				errorMessage +=
+					'No response received from the server. Please check your internet connection.';
 			} else {
 				console.error('Error message:', error.message);
+				errorMessage += error.message;
 			}
-			setError(
-				'Failed to create task. Please check the console for more details.'
-			);
+			setError(errorMessage);
 		} finally {
 			setIsLoading(false);
 		}
 	};
+
+	const sortedTeamMembers = [...teamMembers].sort((a, b) =>
+		a.name.split(' ')[0].localeCompare(b.name.split(' ')[0])
+	);
 
 	return (
 		<FormContainer onSubmit={handleSubmit}>
@@ -209,6 +248,17 @@ const ClickUpTaskForm = ({ listId, apiKey }) => {
 				/>
 			</InputGroup>
 
+			{/* <InputGroup>
+				<Label htmlFor='subject'>Subject</Label>
+				<Input
+					id='subject'
+					type='text'
+					name='subject'
+					value={taskData.subject}
+					onChange={handleChange}
+				/>
+			</InputGroup> */}
+
 			<InputGroup>
 				<Label htmlFor='description'>Description</Label>
 				<TextArea
@@ -222,24 +272,24 @@ const ClickUpTaskForm = ({ listId, apiKey }) => {
 			<InputGroup>
 				<Label>Assignees</Label>
 				{taskData.assignees.map((assignee, index) => (
-					<AssigneeContainer key={index}>
-						<Select
-							value={assignee}
-							onChange={(e) =>
-								handleAssigneeChange(index, e.target.value)
-							}
-						>
-							<option value=''>Select an assignee</option>
-							{teamMembers.map((member) => (
-								<option
-									key={member.userId}
-									value={member.userId}
-								>
-									{member.name}
-								</option>
-							))}
-						</Select>
-					</AssigneeContainer>
+					<Select
+						key={index}
+						value={assignee}
+						onChange={(e) =>
+							handleAssigneeChange(index, e.target.value)
+						}
+						required={index === 0}
+					>
+						<option value=''>Select an assignee</option>
+						{sortedTeamMembers.map((member) => (
+							<option
+								key={member.userId}
+								value={member.userId}
+							>
+								{member.name}
+							</option>
+						))}
+					</Select>
 				))}
 			</InputGroup>
 
@@ -265,17 +315,6 @@ const ClickUpTaskForm = ({ listId, apiKey }) => {
 					type='date'
 					name='due_date'
 					value={taskData.due_date}
-					onChange={handleChange}
-				/>
-			</InputGroup>
-
-			<InputGroup>
-				<Label htmlFor='tags'>Tags (comma-separated)</Label>
-				<Input
-					id='tags'
-					type='text'
-					name='tags'
-					value={taskData.tags}
 					onChange={handleChange}
 				/>
 			</InputGroup>

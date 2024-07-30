@@ -1,7 +1,10 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import styled, { ThemeProvider } from 'styled-components';
 import './App.css';
-import { getMeetingSummary } from './components/FireFlies/FireFlies';
+import {
+	getMeetingSummary,
+	getRecentMeetings,
+} from './components/FireFlies/FireFlies';
 import Claude from './components/Claude/Claude';
 import ClickUpTaskForm from './components/ClickUp/ClickUpTaskForm';
 import Team from './components/Team/team';
@@ -56,32 +59,16 @@ const Title = styled.h1`
 	text-align: center;
 `;
 
-const Form = styled.form`
-	margin-bottom: 20px;
-	width: 100%;
-	max-width: 400px;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-`;
-
-const Input = styled.input`
-	width: 100%;
-	padding: 10px;
-	margin-bottom: 10px;
-	border: 1px solid ${(props) => props.theme.deepBlue};
-	border-radius: 4px;
-	font-size: 14px;
-`;
-
 const Button = styled.button`
 	background-color: ${(props) => props.theme.electricBlue};
 	color: ${(props) => props.theme.white};
-	padding: 10px 15px;
+	padding: 12px 20px;
 	border: none;
 	border-radius: 4px;
 	cursor: pointer;
 	font-size: 16px;
+	min-width: 150px;
+	white-space: nowrap;
 
 	&:hover {
 		background-color: ${(props) => props.theme.navy};
@@ -100,34 +87,132 @@ const NavButton = styled(Button)`
 		props.active ? props.theme.navy : props.theme.electricBlue};
 `;
 
+const MeetingListContainer = styled.div`
+	width: 100%;
+	max-width: 800px;
+	height: 400px;
+	overflow-y: auto;
+	border: 1px solid ${(props) => props.theme.deepBlue};
+	border-radius: 4px;
+	background-color: ${(props) => props.theme.white};
+`;
+
+const MeetingList = styled.ul`
+	list-style-type: none;
+	padding: 0;
+	margin: 0;
+`;
+
+const MeetingItem = styled.li`
+	padding: 15px;
+	border-bottom: 1px solid ${(props) => props.theme.lightBlue};
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	min-height: 80px;
+
+	&:last-child {
+		border-bottom: none;
+	}
+`;
+
+const MeetingTitle = styled.span`
+	flex-grow: 1;
+	margin-right: 15px;
+	font-size: 16px;
+	line-height: 1.4;
+`;
+
+const ErrorMessage = styled.div`
+	color: red;
+	margin-bottom: 10px;
+	text-align: center;
+`;
+
+const RetryButton = styled(Button)`
+	margin-top: 10px;
+`;
+
+const ListSelect = styled.select`
+	width: 100%;
+	padding: 8px;
+	margin-bottom: 20px;
+	border: 1px solid ${(props) => props.theme.deepBlue};
+	border-radius: 4px;
+	font-size: 14px;
+	background-color: ${(props) => props.theme.white};
+`;
+
 function App() {
-	const [meetingId, setMeetingId] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
 	const [currentPage, setCurrentPage] = useState('home');
 	const claudeRef = useRef(null);
-	const listId = '901101977190';
+	const [selectedListId, setSelectedListId] = useState('901103664000');
 	const apiKey = 'pk_75474330_J8BUV2X6XJMPYVKQMHILKCF129HIOU0J';
+	const [recentMeetings, setRecentMeetings] = useState([]);
+	const [error, setError] = useState(null);
+	const [todoList, setTodoList] = useState('');
 
-	const fetchMeetingSummaryAndSendToClaude = async () => {
-		if (!meetingId) return;
+	const clickUpLists = [
+		{
+			name: '(AI) Agent - Geometry Search & Synthesis',
+			id: '901102697145',
+		},
+		{ name: 'Agent - Virtual World', id: '901102697244' },
+		{ name: '(Architecture) Infrastructure', id: '901102789542' },
+		{ name: '(SELF) Learning Engine', id: '901102790411' },
+		{ name: '(Front End) UI', id: '901102790765' },
+		{ name: 'Parameterized Geometries', id: '901103664000' },
+		{ name: 'ArkPad', id: '901102681271' },
+	];
+
+	useEffect(() => {
+		fetchRecentMeetings();
+	}, []);
+
+	const fetchRecentMeetings = async () => {
 		setIsLoading(true);
+		setError(null);
 		try {
-			let summary = await getMeetingSummary(meetingId);
-			const formattedText = `Please create todo lists for each person mentioned in the meeting summary who has action items. Format each person's todos as a bulleted list, using sub-bullets for specific tasks if necessary. Also try to give a sentence or 2 extra of detail around a todo if possible? Here's the meeting summary: ${summary.formattedText}`;
-
-			if (claudeRef.current) {
-				claudeRef.current.sendMessage(formattedText);
-			}
+			const meetings = await getRecentMeetings();
+			setRecentMeetings(meetings);
 		} catch (error) {
-			console.error('Error fetching meeting summary:', error);
+			console.error('Error fetching recent meetings:', error);
+			setError(
+				'Failed to fetch recent meetings. Please try again later.'
+			);
 		} finally {
 			setIsLoading(false);
 		}
 	};
 
-	const handleSubmit = (e) => {
-		e.preventDefault();
-		fetchMeetingSummaryAndSendToClaude();
+	const fetchMeetingSummaryAndSendToClaude = async (selectedMeetingId) => {
+		setIsLoading(true);
+		setError(null);
+		try {
+			let summary = await getMeetingSummary(selectedMeetingId);
+			const formattedText = `Please create todo lists for each person mentioned in the meeting summary who has action items. Format each person's todos as a bulleted list, using sub-bullets for specific tasks if necessary. Also try to give a sentence or 2 extra of detail around a todo if possible? Here's the meeting summary: ${summary.formattedText}`;
+
+			if (claudeRef.current) {
+				const response = await claudeRef.current.sendMessage(
+					formattedText
+				);
+				setTodoList(response);
+			}
+		} catch (error) {
+			console.error(
+				'Error fetching meeting summary or generating todos:',
+				error
+			);
+			setError('Failed to generate todos. Please try again later.');
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
+	const handleListChange = (e) => {
+		setSelectedListId(e.target.value);
+		console.log('Selected List ID:', e.target.value);
 	};
 
 	const renderContent = () => {
@@ -137,35 +222,68 @@ function App() {
 					<>
 						<CenteredSection>
 							<Title>Meeting Todo List Generator</Title>
-							<Form onSubmit={handleSubmit}>
-								<Input
-									type='text'
-									value={meetingId}
-									onChange={(e) =>
-										setMeetingId(e.target.value)
-									}
-									placeholder='Enter FireFlies meeting ID'
-								/>
-								<Button
-									type='submit'
-									disabled={isLoading}
-								>
-									{isLoading
-										? 'Generating...'
-										: 'Generate Todo List'}
-								</Button>
-							</Form>
+							{error && (
+								<>
+									<ErrorMessage>{error}</ErrorMessage>
+									<RetryButton onClick={fetchRecentMeetings}>
+										Retry Fetching Meetings
+									</RetryButton>
+								</>
+							)}
+							{isLoading ? (
+								<p>Loading meetings...</p>
+							) : (
+								<MeetingListContainer>
+									<MeetingList>
+										{recentMeetings.map((meeting) => (
+											<MeetingItem key={meeting.id}>
+												<MeetingTitle>
+													{meeting.title}
+													{meeting.date &&
+														` (${new Date(
+															meeting.date
+														).toLocaleDateString()})`}
+												</MeetingTitle>
+												<Button
+													onClick={() =>
+														fetchMeetingSummaryAndSendToClaude(
+															meeting.id
+														)
+													}
+													disabled={isLoading}
+												>
+													Generate Todos
+												</Button>
+											</MeetingItem>
+										))}
+									</MeetingList>
+								</MeetingListContainer>
+							)}
 						</CenteredSection>
 						<SplitSection>
 							<Column>
 								<Claude
 									ref={claudeRef}
+									todoList={todoList}
 									width='100%'
 								/>
 							</Column>
 							<Column>
+								<ListSelect
+									onChange={handleListChange}
+									value={selectedListId}
+								>
+									{clickUpLists.map((list) => (
+										<option
+											key={list.id}
+											value={list.id}
+										>
+											{list.name}
+										</option>
+									))}
+								</ListSelect>
 								<ClickUpTaskForm
-									listId={listId}
+									listId={selectedListId}
 									apiKey={apiKey}
 								/>
 							</Column>
