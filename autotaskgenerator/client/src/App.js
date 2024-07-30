@@ -193,7 +193,7 @@ function App() {
 		setError(null);
 		try {
 			let summary = await getMeetingSummary(selectedMeetingId);
-			const formattedText = `Please create ToDo lists for each person mentioned in the meeting summary who has action items. Format each person's todos as a bulleted list, using sub-bullets for specific tasks if necessary. Also try to give a sentance or 2 extra of detail around a todo if possible? Here's the meeting summary: ${summary.formattedText}`;
+			const formattedText = `Please create todo lists for each person mentioned in the meeting summary who has action items. Format each person's todos as a bulleted list, using sub-bullets for specific tasks if necessary. Also try to give a sentance or 2 extra of detail around a todo if possible? Here's the meeting summary: ${summary.formattedText}`;
 
 			if (claudeRef.current) {
 				const response = await claudeRef.current.sendMessage(
