@@ -1,7 +1,7 @@
 const https = require('https');
 
 // Your ClickUp API token
-const API_TOKEN = 'pk_75474330_J8BUV2X6XJMPYVKQMHILKCF129HIOU0J';
+const API_TOKEN = '';
 
 // Your Workspace ID (Team ID)
 const WORKSPACE_ID = '20115771'; // Replace with your actual Workspace ID
