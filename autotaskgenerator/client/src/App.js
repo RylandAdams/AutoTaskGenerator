@@ -143,6 +143,35 @@ const ListSelect = styled.select`
 	background-color: ${(props) => props.theme.white};
 `;
 
+const CustomPromptInput = styled.textarea`
+	width: 100%;
+	height: 100px;
+	margin-bottom: 20px;
+	padding: 10px;
+	border: 1px solid ${(props) => props.theme.deepBlue};
+	border-radius: 4px;
+	font-size: 14px;
+	resize: vertical;
+`;
+
+const InputForm = styled.form`
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: 15px;
+	border-bottom: 1px solid ${(props) => props.theme.lightBlue};
+	min-height: 80px;
+`;
+
+const Input = styled.input`
+	width: 60%;
+	padding: 8px;
+	margin-right: 15px;
+	border: 1px solid ${(props) => props.theme.deepBlue};
+	border-radius: 4px;
+	font-size: 14px;
+`;
+
 function App() {
 	const [isLoading, setIsLoading] = useState(false);
 	const [currentPage, setCurrentPage] = useState('home');
@@ -154,6 +183,8 @@ function App() {
 	const [recentMeetings, setRecentMeetings] = useState([]);
 	const [error, setError] = useState(null);
 	const [todoList, setTodoList] = useState('');
+	const [customPrompt, setCustomPrompt] = useState('');
+	const [manualMeetingId, setManualMeetingId] = useState('');
 
 	const clickUpLists = [
 		{
@@ -193,13 +224,17 @@ function App() {
 		setError(null);
 		try {
 			let summary = await getMeetingSummary(selectedMeetingId);
-			const formattedText = `Please create todo lists for each person mentioned in the meeting summary who has action items. Format each person's todos as a bulleted list, using sub-bullets for specific tasks if necessary. Also try to give a sentance or 2 extra of detail around a todo if possible? Here's the meeting summary: ${summary.formattedText}`;
+			const defaultPrompt = `Please create todo lists for each person mentioned in the meeting summary who has action items. Format each person's todos as a bulleted list, using sub-bullets for specific tasks if necessary. Also try to give a sentence or 2 extra of detail around a todo if possible? Here's the meeting summary:`;
+
+			const promptToUse = customPrompt.trim() || defaultPrompt;
+			const formattedText = `${promptToUse} ${summary.formattedText}`;
 
 			if (claudeRef.current) {
 				const response = await claudeRef.current.sendMessage(
 					formattedText
 				);
 				setTodoList(response);
+				console.log('Response from Claude:', response);
 			}
 		} catch (error) {
 			console.error(
@@ -217,6 +252,14 @@ function App() {
 		console.log('Selected List ID:', e.target.value);
 	};
 
+	const handleManualSubmit = (e) => {
+		e.preventDefault();
+		if (manualMeetingId.trim()) {
+			fetchMeetingSummaryAndSendToClaude(manualMeetingId.trim());
+			setManualMeetingId('');
+		}
+	};
+
 	const renderContent = () => {
 		switch (currentPage) {
 			case 'home':
@@ -224,6 +267,13 @@ function App() {
 					<>
 						<CenteredSection>
 							<Title>Meeting Todo List Generator</Title>
+							<CustomPromptInput
+								value={customPrompt}
+								onChange={(e) =>
+									setCustomPrompt(e.target.value)
+								}
+								placeholder='Enter a custom prompt for generating todos (optional)'
+							/>
 							{error && (
 								<>
 									<ErrorMessage>{error}</ErrorMessage>
@@ -237,6 +287,28 @@ function App() {
 							) : (
 								<MeetingListContainer>
 									<MeetingList>
+										<MeetingItem>
+											<InputForm
+												onSubmit={handleManualSubmit}
+											>
+												<Input
+													type='text'
+													value={manualMeetingId}
+													onChange={(e) =>
+														setManualMeetingId(
+															e.target.value
+														)
+													}
+													placeholder='Enter meeting ID'
+												/>
+												<Button
+													type='submit'
+													disabled={isLoading}
+												>
+													Generate Todos
+												</Button>
+											</InputForm>
+										</MeetingItem>
 										{recentMeetings.map((meeting) => (
 											<MeetingItem key={meeting.id}>
 												<MeetingTitle>
@@ -267,6 +339,7 @@ function App() {
 								<Claude
 									ref={claudeRef}
 									todoList={todoList}
+									setTodoList={setTodoList}
 									width='100%'
 								/>
 							</Column>
