@@ -1,7 +1,6 @@
 # CLIENT
 # Fireflies API Configuration
-PUBLIC_URL=https://mosebot.com
-HOST=0.0.0.0
+PUBLIC_URL=https://mosebot.com/todo
 REACT_APP_FIREFLIES_API_BASE_URL=https://api.fireflies.ai/graphql
 REACT_APP_FIREFLIES_API_KEY=6f0b1af3-701b-40d8-bf8f-f1f3adf70cf5
 # ClickUp API Configuration
