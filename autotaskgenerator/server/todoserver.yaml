@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-server
+  labels:
+    app: todo-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo-server
+  template:
+    metadata:
+      labels:
+        app: todo-server
+    spec:
+      containers:
+      - name: todo-server
+        image: todoserver:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 3000
+        #volumeMounts:
+        #  - mountPath: /export/d0/plotting_content
+        #    name: test-volume
+      #volumes:
+      #  - name: test-volume
+      #    hostPath:
+      #      path: /export/d0/plotting_content
+      #      type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-server-service
+spec:
+  selector:
+    app: todo-server
+    #type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+      #nodePort: 30002

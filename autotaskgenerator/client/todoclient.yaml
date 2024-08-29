@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-client
+  labels:
+    app: todo-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo-client
+  template:
+    metadata:
+      labels:
+        app: todo-client
+    spec:
+      containers:
+      - name: todo-client
+        image: todoclient:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 3000
+        #volumeMounts:
+        #  - mountPath: /export/d0/plotting_content
+        #    name: test-volume
+      #volumes:
+      #  - name: test-volume
+      #    hostPath:
+      #      path: /export/d0/plotting_content
+      #      type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-client-service
+spec:
+  selector:
+    app: todo-client
+    #type: LoadBalancer
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+      #nodePort: 30002
