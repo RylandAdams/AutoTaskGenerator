@@ -10,6 +10,7 @@ import ClickUpTaskForm from './components/ClickUp/ClickUpTaskForm';
 import Team from './components/Team/team';
 import { TeamProvider } from './TeamContext';
 import { TodoProvider } from './TodoContext';
+import config from './app.json';
 
 const theme = {
 	electricBlue: '#0B52E1',
@@ -177,9 +178,9 @@ function App() {
 	const [currentPage, setCurrentPage] = useState('home');
 	const claudeRef = useRef(null);
 	const [selectedListId, setSelectedListId] = useState(
-		process.env.REACT_APP_DEFAULT_CLICKUP_LIST_ID
+		config.REACT_APP_DEFAULT_CLICKUP_LIST_ID
 	);
-	const apiKey = process.env.REACT_APP_CLICKUP_API_KEY;
+	const apiKey = config.REACT_APP_CLICKUP_API_KEY;
 	const [recentMeetings, setRecentMeetings] = useState([]);
 	const [error, setError] = useState(null);
 	const [todoList, setTodoList] = useState('');

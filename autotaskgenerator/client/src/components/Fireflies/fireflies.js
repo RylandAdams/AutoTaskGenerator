@@ -1,7 +1,8 @@
 import axios from 'axios';
+import config from './../../app.json';
 
-const FIREFLIES_API_BASE_URL = process.env.REACT_APP_FIREFLIES_API_BASE_URL;
-const FIREFLIES_API_KEY = process.env.REACT_APP_FIREFLIES_API_KEY;
+const FIREFLIES_API_BASE_URL = config.REACT_APP_FIREFLIES_API_BASE_URL;
+const FIREFLIES_API_KEY = config.REACT_APP_FIREFLIES_API_KEY;
 
 export const getMeetingSummary = async (transcriptId) => {
 	const headers = {
